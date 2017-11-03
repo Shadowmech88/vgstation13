@@ -56,6 +56,16 @@
 
 	var/w_class = W_CLASS_LARGE
 
+	var/list/bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 15,
+		list(MINOR_BLEED,DOES_CLOT) = 15,
+		list(MEDIUM_BLEED,DOES_CLOT) = 14,
+		list(MAJOR_BLEED,DOES_CLOT) = 14,
+		list(MEDIUM_BLEED,NO_CLOT) = 14,
+		list(MAJOR_BLEED,NO_CLOT) = 14,
+		list(SEVERE_BLEED,NO_CLOT) = 14
+		)
+
 
 /datum/organ/external/New(var/datum/organ/external/P)
 	if(P)
@@ -511,6 +521,7 @@ Note that amputating the affected organ does in fact remove the infection from t
 	var/datum/species/species = src.species || owner.species
 
 	for(var/datum/wound/W in wounds)
+		W.update()
 		//Internal wounds get worse over time. Low temperatures (cryo) stop them.
 		if(W.internal && !W.is_treated() && owner.bodytemperature >= 170 && !(species && species.anatomy_flags & NO_BLOOD))
 			if(!owner.reagents.has_any_reagents(list(BICARIDINE,INAPROVALINE,CLOTTING_AGENT,BIOFOAM)))	//Bicard, inaprovaline, clotting agent, and biofoam stop internal wounds from growing bigger with time, and also slow bleeding
@@ -572,17 +583,17 @@ Note that amputating the affected organ does in fact remove the infection from t
 		else if(W.damage_type == BURN)
 			burn_dam += W.damage
 
-		if(is_organic() && W.bleeding() && !(species.anatomy_flags & NO_BLOOD))
-			W.bleed_timer--
+		if(is_organic() && istype(W, /datum/wound/bleed) && !(species.anatomy_flags & NO_BLOOD))
+//			W.bleed_timer--
 			if(!owner.reagents.has_reagent(CLOTTING_AGENT))
 				status |= ORGAN_BLEEDING
 
 		clamped |= W.clamped
 		number_wounds += W.amount
 
-	if(open && !clamped && is_organic() && !(species.anatomy_flags & NO_BLOOD)) //Things tend to bleed if they are CUT OPEN
-		if(!owner.reagents.has_reagent(CLOTTING_AGENT))
-			status |= ORGAN_BLEEDING
+//	if(open && !clamped && is_organic() && !(species.anatomy_flags & NO_BLOOD)) //Things tend to bleed if they are CUT OPEN
+//		if(!owner.reagents.has_reagent(CLOTTING_AGENT))
+//			status |= ORGAN_BLEEDING
 
 
 // new damage icon system
@@ -1125,6 +1136,15 @@ Note that amputating the affected organ does in fact remove the infection from t
 	vital = 1
 	encased = "ribcage"
 	w_class = W_CLASS_MEDIUM
+	bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 54.9,
+		list(MINOR_BLEED,DOES_CLOT) = 8.2,
+		list(MEDIUM_BLEED,DOES_CLOT) = 2.7,
+		list(MAJOR_BLEED,DOES_CLOT) = 11,
+		list(MEDIUM_BLEED,NO_CLOT) = 7.9,
+		list(MAJOR_BLEED,NO_CLOT) = 1.8,
+		list(SEVERE_BLEED,NO_CLOT) = 13.5
+		)
 
 /datum/organ/external/groin
 	name = LIMB_GROIN
@@ -1135,6 +1155,15 @@ Note that amputating the affected organ does in fact remove the infection from t
 	body_part = LOWER_TORSO
 	vital = 1
 	w_class = W_CLASS_MEDIUM
+	bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 62.9,
+		list(MINOR_BLEED,DOES_CLOT) = 7.7,
+		list(MEDIUM_BLEED,DOES_CLOT) = 5.3,
+		list(MAJOR_BLEED,DOES_CLOT) = 6.3,
+		list(MEDIUM_BLEED,NO_CLOT) = 10.7,
+		list(MAJOR_BLEED,NO_CLOT) = 1.1,
+		list(SEVERE_BLEED,NO_CLOT) = 6
+		)
 
 //=====Legs======
 
@@ -1147,6 +1176,15 @@ Note that amputating the affected organ does in fact remove the infection from t
 	body_part = LEG_LEFT
 	icon_position = LEFT
 	w_class = W_CLASS_SMALL
+	bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 54.7,
+		list(MINOR_BLEED,DOES_CLOT) = 4.1,
+		list(MEDIUM_BLEED,DOES_CLOT) = 14.3,
+		list(MAJOR_BLEED,DOES_CLOT) = 3.9,
+		list(MEDIUM_BLEED,NO_CLOT) = 7.6,
+		list(MAJOR_BLEED,NO_CLOT) = 5.1,
+		list(SEVERE_BLEED,NO_CLOT) = 10.3
+		)
 
 /datum/organ/external/l_leg/can_stand()
 	//Peg legs don't require an attached foot
@@ -1182,8 +1220,16 @@ Note that amputating the affected organ does in fact remove the infection from t
 	min_broken_damage = 30
 	body_part = LEG_RIGHT
 	icon_position = RIGHT
-
 	w_class = W_CLASS_SMALL
+	bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 54.7,
+		list(MINOR_BLEED,DOES_CLOT) = 4.1,
+		list(MEDIUM_BLEED,DOES_CLOT) = 14.3,
+		list(MAJOR_BLEED,DOES_CLOT) = 3.9,
+		list(MEDIUM_BLEED,NO_CLOT) = 7.6,
+		list(MAJOR_BLEED,NO_CLOT) = 5.1,
+		list(SEVERE_BLEED,NO_CLOT) = 10.3
+		)
 
 //This proc is same as l_leg/can_stand()
 /datum/organ/external/r_leg/can_stand()
@@ -1225,6 +1271,16 @@ Note that amputating the affected organ does in fact remove the infection from t
 
 	grasp_id = GRASP_LEFT_HAND
 
+	bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 66.9,
+		list(MINOR_BLEED,DOES_CLOT) = 3.8,
+		list(MEDIUM_BLEED,DOES_CLOT) = 15.1,
+		list(MAJOR_BLEED,DOES_CLOT) = 0,
+		list(MEDIUM_BLEED,NO_CLOT) = 3.2,
+		list(MAJOR_BLEED,NO_CLOT) = 5.8,
+		list(SEVERE_BLEED,NO_CLOT) = 5.2
+		)
+
 /datum/organ/external/l_arm/generate_dropped_organ(current_organ)
 	if(status & ORGAN_PEG)
 		current_organ = new /obj/item/weapon/peglimb(owner.loc)
@@ -1244,6 +1300,16 @@ Note that amputating the affected organ does in fact remove the infection from t
 	body_part = ARM_RIGHT
 
 	grasp_id = GRASP_RIGHT_HAND
+
+	bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 66.9,
+		list(MINOR_BLEED,DOES_CLOT) = 3.8,
+		list(MEDIUM_BLEED,DOES_CLOT) = 15.1,
+		list(MAJOR_BLEED,DOES_CLOT) = 0,
+		list(MEDIUM_BLEED,NO_CLOT) = 3.2,
+		list(MAJOR_BLEED,NO_CLOT) = 5.8,
+		list(SEVERE_BLEED,NO_CLOT) = 5.2
+		)
 
 /datum/organ/external/r_arm/generate_dropped_organ(current_organ)
 	if(is_peg())
@@ -1267,6 +1333,16 @@ Note that amputating the affected organ does in fact remove the infection from t
 	w_class = W_CLASS_TINY
 	slots_to_drop = list(slot_shoes, slot_legcuffed)
 
+	bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 60.5,
+		list(MINOR_BLEED,DOES_CLOT) = 18.6,
+		list(MEDIUM_BLEED,DOES_CLOT) = 0,
+		list(MAJOR_BLEED,DOES_CLOT) = 0,
+		list(MEDIUM_BLEED,NO_CLOT) = 12.9,
+		list(MAJOR_BLEED,NO_CLOT) = 8,
+		list(SEVERE_BLEED,NO_CLOT) = 0
+		)
+
 /datum/organ/external/l_foot/generate_dropped_organ(current_organ)
 	if(is_peg())
 		current_organ = new /obj/item/weapon/peglimb(owner.loc)
@@ -1286,6 +1362,16 @@ Note that amputating the affected organ does in fact remove the infection from t
 
 	w_class = W_CLASS_TINY
 	slots_to_drop = list(slot_shoes, slot_legcuffed)
+
+	bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 60.5,
+		list(MINOR_BLEED,DOES_CLOT) = 18.6,
+		list(MEDIUM_BLEED,DOES_CLOT) = 0,
+		list(MAJOR_BLEED,DOES_CLOT) = 0,
+		list(MEDIUM_BLEED,NO_CLOT) = 12.9,
+		list(MAJOR_BLEED,NO_CLOT) = 8,
+		list(SEVERE_BLEED,NO_CLOT) = 0
+		)
 
 /datum/organ/external/r_foot/generate_dropped_organ(current_organ)
 	if(is_peg())
@@ -1308,6 +1394,16 @@ Note that amputating the affected organ does in fact remove the infection from t
 	w_class = W_CLASS_TINY
 	slots_to_drop = list(slot_gloves, slot_handcuffed)
 
+	bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 59.1,
+		list(MINOR_BLEED,DOES_CLOT) = 21.1,
+		list(MEDIUM_BLEED,DOES_CLOT) = 0,
+		list(MAJOR_BLEED,DOES_CLOT) = 0,
+		list(MEDIUM_BLEED,NO_CLOT) = 17.9,
+		list(MAJOR_BLEED,NO_CLOT) = 1.9,
+		list(SEVERE_BLEED,NO_CLOT) = 0
+		)
+
 /datum/organ/external/r_hand/generate_dropped_organ(current_organ)
 	if(is_peg())
 		current_organ = new /obj/item/weapon/peglimb(owner.loc)
@@ -1328,6 +1424,16 @@ Note that amputating the affected organ does in fact remove the infection from t
 
 	w_class = W_CLASS_TINY
 	slots_to_drop = list(slot_gloves, slot_handcuffed)
+
+	bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 59.1,
+		list(MINOR_BLEED,DOES_CLOT) = 21.1,
+		list(MEDIUM_BLEED,DOES_CLOT) = 0,
+		list(MAJOR_BLEED,DOES_CLOT) = 0,
+		list(MEDIUM_BLEED,NO_CLOT) = 17.9,
+		list(MAJOR_BLEED,NO_CLOT) = 1.9,
+		list(SEVERE_BLEED,NO_CLOT) = 0
+		)
 
 /datum/organ/external/l_hand/generate_dropped_organ(current_organ)
 	if(is_peg())
@@ -1350,6 +1456,16 @@ Note that amputating the affected organ does in fact remove the infection from t
 
 	w_class = W_CLASS_SMALL
 	slots_to_drop = list(slot_glasses, slot_wear_mask, slot_head, slot_ears)
+
+	bleed_chances = list(
+		list(TINY_BLEED,DOES_CLOT) = 74.2,
+		list(MINOR_BLEED,DOES_CLOT) = 0,
+		list(MEDIUM_BLEED,DOES_CLOT) = 5.8,
+		list(MAJOR_BLEED,DOES_CLOT) = 5.1,
+		list(MEDIUM_BLEED,NO_CLOT) = 0.5,
+		list(MAJOR_BLEED,NO_CLOT) = 14.4,
+		list(SEVERE_BLEED,NO_CLOT) = 0
+		)
 
 /datum/organ/external/head/generate_dropped_organ(current_organ)
 	if(!current_organ)

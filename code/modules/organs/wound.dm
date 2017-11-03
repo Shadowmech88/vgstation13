@@ -14,7 +14,7 @@
 	// amount of damage this wound causes
 	var/damage = 0
 	// ticks of bleeding left.
-	var/bleed_timer = 0
+//	var/bleed_timer = 0
 	// amount of damage the current wound type requires(less means we need to apply the next healing stage)
 	var/min_damage = 0
 
@@ -39,7 +39,7 @@
 
 	// maximum stage at which bleeding should still happen, counted from the right rather than the left of the list
 	// 1 means all stages except the last should bleed
-	var/max_bleeding_stage = 1
+//	var/max_bleeding_stage = 1
 
 	// internal wounds can only be fixed through surgery
 	var/internal = 0
@@ -73,7 +73,7 @@
 	// this is more robust to changes to the list
 	max_bleeding_stage = src.desc_list.len - max_bleeding_stage
 
-	bleed_timer += damage / BLOODLOSS_SPEED_MULTIPLIER
+//	bleed_timer += damage / BLOODLOSS_SPEED_MULTIPLIER
 
 // returns 1 if there's a next stage, 0 otherwise
 /datum/wound/proc/next_stage()
@@ -110,11 +110,11 @@
 		return 0
 	var/dam_coef = round(damage/10)
 	switch (damage_type)
-		if (BRUISE)
-			return prob(dam_coef*5) && bleeding() //bruises only infectable if bleeding
 		if (BURN)
 			return prob(dam_coef*10)
 		if (CUT)
+			return prob(dam_coef*10)
+		if (BLEED)
 			return prob(dam_coef*20)
 
 	return 0
@@ -131,16 +131,16 @@
 		germ_level = 0
 		return 0
 
-	if(damage_type == BRUISE && !bleeding())
+	if(damage_type == BRUISE)
 		return 0
 
 	var/dam_coef = round(damage/10)
 	switch (damage_type)
-		if (BRUISE)
-			return prob(dam_coef*5)
 		if (BURN)
 			return prob(dam_coef*10)
 		if (CUT)
+			return prob(dam_coef*10)
+		if (BLEED)
 			return prob(dam_coef*20)
 
 	return 0
@@ -165,7 +165,7 @@
 // opens the wound again
 /datum/wound/proc/open_wound(damage)
 	src.damage += damage
-	bleed_timer += damage / BLOODLOSS_SPEED_MULTIPLIER
+//	bleed_timer += damage / BLOODLOSS_SPEED_MULTIPLIER
 
 	while(src.current_stage > 1 && src.damage_list[current_stage-1] <= src.damage)
 		src.current_stage--
@@ -173,40 +173,96 @@
 	src.desc = desc_list[current_stage]
 	src.min_damage = damage_list[current_stage]
 
-/datum/wound/proc/bleeding()
+//datum/wound/proc/bleeding()
 	// internal wounds don't bleed in the sense of this function
-	return ((damage > 30 || bleed_timer > 0) && !(bandaged||clamped) && (damage_type == BRUISE && damage >= 20 || damage_type == CUT && damage >= 5) && current_stage <= max_bleeding_stage && !src.internal)
+//	return ((damage > 30 || bleed_timer > 0) && !(bandaged||clamped) && (damage_type == BRUISE && damage >= 20 || damage_type == CUT && damage >= 5) && current_stage <= max_bleeding_stage && !src.internal)
+
+/datum/wound/proc/update()	//called by update_wounds()
+	return
 
 /** CUTS **/
 /datum/wound/cut/small
 	// link wound descriptions to amounts of damage
-	max_bleeding_stage = 2
+//	max_bleeding_stage = 2
 	stages = list("ugly ripped cut" = 20, "ripped cut" = 10, "cut" = 5, "healing cut" = 2, "small scab" = 0)
 
 /datum/wound/cut/deep
-	max_bleeding_stage = 3
+//	max_bleeding_stage = 3
 	stages = list("ugly deep ripped cut" = 25, "deep ripped cut" = 20, "deep cut" = 15, "clotted cut" = 8, "scab" = 2, "fresh skin" = 0)
 
 /datum/wound/cut/flesh
-	max_bleeding_stage = 3
+//	max_bleeding_stage = 3
 	stages = list("ugly ripped flesh wound" = 35, "ugly flesh wound" = 30, "flesh wound" = 25, "blood soaked clot" = 15, "large scab" = 5, "fresh skin" = 0)
 
 /datum/wound/cut/gaping
-	max_bleeding_stage = 2
+//	max_bleeding_stage = 2
 	stages = list("gaping wound" = 50, "large blood soaked clot" = 25, "large clot" = 15, "small angry scar" = 5, \
 				   "small straight scar" = 0)
 
 /datum/wound/cut/gaping_big
-	max_bleeding_stage = 2
+//	max_bleeding_stage = 2
 	stages = list("big gaping wound" = 60, "healing gaping wound" = 40, "large angry scar" = 10, "large straight scar" = 0)
 
 	needs_treatment = 1 // this only heals when bandaged
 
 datum/wound/cut/massive
-	max_bleeding_stage = 2
+//	max_bleeding_stage = 2
 	stages = list("massive wound" = 70, "massive healing wound" = 50, "massive angry scar" = 10,  "massive jagged scar" = 0)
 
 	needs_treatment = 1 // this only heals when bandaged
+
+/** BLEEDS **/
+/datum/wound/bleed
+	damage_type = BLEED
+	needs_treatment = TRUE
+	var/clotting = 0
+	var/current_severity = null
+	var/list/severity_list = list(
+		TINY_BLEED,
+		MINOR_BLEED,
+		MEDIUM_BLEED,
+		MAJOR_BLEED,
+		SEVERE_BLEED
+		)
+
+/datum/wound/bleed/update()
+	if(clotting)
+		if(clotting >= 50)
+			if(current_severity == TINY_BLEED)
+				qdel(src)
+				return
+			var/j = 1
+			for(var/i in severity_list)
+				if(current_severity == i)
+					current_severity = severity_list[j]
+					break
+				j++
+			switch(current_severity)
+				if(TINY_BLEED)
+					desc = "tiny bleed"
+				if(MINOR_BLEED)
+					desc = "slow bleed"
+				if(MEDIUM_BLEED)
+					desc = "steady bleed"
+				if(MAJOR_BLEED)
+					desc = "gushing bleed"
+				if(SEVERE_BLEED)
+					desc = "spraying bleed"
+
+/datum/wound/bleed/proc/get_bloodloss()
+	var/loss = 0
+	switch(current_severity)
+		if(TINY_BLEED)
+			loss = 5
+		if(MINOR_BLEED)
+			loss = 10
+		if(MEDIUM_BLEED)
+			loss = 20
+		if(MAJOR_BLEED)
+			loss = 40
+		if(SEVERE_BLEED)
+			loss = 80
+	return loss * (clotting/100)
 
 /** BRUISES **/
 /datum/wound/bruise

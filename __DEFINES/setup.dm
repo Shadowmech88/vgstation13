@@ -708,6 +708,7 @@ SEE_PIXELS	256
 
 #define CUT 		"cut"
 #define BRUISE		"bruise"
+#define BLEED 		"bleed"
 #define BRUTE		"brute"
 #define BURN		"fire"
 #define TOX			"tox"
